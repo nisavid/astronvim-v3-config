@@ -1,3 +1,8 @@
+--local utils = require "user.utils"
+
+local rtp = {}
+if vim.env.NVIM_QT_RUNTIME_PATH then table.insert(rtp, vim.env.NVIM_QT_RUNTIME_PATH) end
+
 return {
   -- Configure AstroNvim updates
   updater = {
@@ -18,7 +23,7 @@ return {
   },
 
   -- Set colorscheme to use
-  colorscheme = "astrodark",
+  colorscheme = "catppuccin",
 
   -- Diagnostics configuration (for vim.diagnostics.config({...})) when diagnostics are on
   diagnostics = {
@@ -26,60 +31,101 @@ return {
     underline = true,
   },
 
-  lsp = {
-    -- customize lsp formatting options
-    formatting = {
-      -- control auto formatting on save
-      format_on_save = {
-        enabled = true, -- enable or disable format on save globally
-        allow_filetypes = { -- enable format on save for specified filetypes only
-          -- "go",
-        },
-        ignore_filetypes = { -- disable format on save for specified filetypes
-          -- "python",
-        },
-      },
-      disabled = { -- disable formatting capabilities for the listed language servers
-        -- disable lua_ls formatting capability if you want to use StyLua to format your lua code
-        -- "lua_ls",
-      },
-      timeout_ms = 1000, -- default format timeout
-      -- filter = function(client) -- fully override the default formatting function
-      --   return true
-      -- end
-    },
-    -- enable servers that you already have installed without mason
-    servers = {
-      -- "pyright"
-    },
-  },
-
   -- Configure require("lazy").setup() options
   lazy = {
     defaults = { lazy = true },
     performance = {
       rtp = {
-        -- customize default disabled vim plugins
+        paths = rtp,
         disabled_plugins = { "tohtml", "gzip", "matchit", "zipPlugin", "netrwPlugin", "tarPlugin" },
       },
     },
   },
 
-  -- This function is run last and is a good place to configuring
-  -- augroups/autocommands and custom filetypes also this just pure lua so
-  -- anything that doesn't fit in the normal config locations above can go here
-  polish = function()
-    -- Set up custom filetypes
-    -- vim.filetype.add {
-    --   extension = {
-    --     foo = "fooscript",
-    --   },
-    --   filename = {
-    --     ["Foofile"] = "fooscript",
-    --   },
-    --   pattern = {
-    --     ["~/%.config/foo/.*"] = "fooscript",
-    --   },
-    -- }
-  end,
+  lsp = {
+    formatting = {
+      format_on_save = {
+        enabled = true,
+        allow_filetypes = {},
+        ignore_filetypes = {},
+      },
+      disabled = {},
+      timeout_ms = 5000,
+      --filter = function(client)
+      --  if vim.list_contains(utils.null_ls_filetypes, vim.bo.filetype) then return client.name == "null-ls" end
+      --  return true
+      --end,
+    },
+    -- Enable servers installed without mason
+    servers = {
+      -- "pyright"
+    },
+    config = {
+      bashls = function(opts)
+        opts.init_options = { bashIde = { shellcheckPath = "" } }
+        opts.on_attach = function(client, bufnr)
+          for other_client in vim.iter(vim.lsp.get_clients { bufnr = bufnr }) do
+            if other_client.name == "pkgbuild_language_server" then
+              vim.lsp.buf_detach_client(bufnr, client.id)
+              break
+            end
+          end
+        end
+        return opts
+      end,
+
+      cssls = function(opts)
+        local capabilities = vim.lsp.protocol.make_client_capabilities()
+        capabilities.textDocument.completion.completionItem.snippetSupport = true
+        opts.capabilities = capabilities
+        return opts
+      end,
+
+      --denols = function(opts)
+      --  opts.root_dir = require("lspconfig.util").root_pattern("deno.json", "deno.jsonc")
+      --  return opts
+      --end,
+
+      pkgbuild_language_server = function(opts)
+        opts.filetypes = { "bash" }
+        opts.root_dir = require("lspconfig.util").root_pattern "PKGBUILD"
+        opts.on_attach = function(_, bufnr)
+          for other_client in vim.iter(vim.lsp.get_clients { bufnr = bufnr }) do
+            if other_client.name == "bashls" then vim.lsp.buf_detach_client(bufnr, other_client.id) end
+          end
+        end
+        return opts
+      end,
+
+      taplo = function(opts)
+        -- Add `.*.toml` to root patterns in order to work around <https://github.com/tamasfe/taplo/issues/439>
+        opts.root_dir = require("lspconfig.util").root_pattern("*.toml", ".*.toml", ".git")
+        return opts
+      end,
+
+      tsserver = {
+        settings = function(opts)
+          opts.javascript.inlayHints = {
+            includeInlayEnumMemberValueHints = true,
+            includeInlayFunctionLikeReturnTypeHints = true,
+            includeInlayFunctionParameterTypeHints = true,
+            includeInlayParameterNameHints = "all",
+            includeInlayParameterNameHintsWhenArgumentMatchesName = true,
+            includeInlayPropertyDeclarationTypeHints = true,
+            includeInlayVariableTypeHints = true,
+          }
+          opts.typescript.inlayHints = {
+            includeInlayEnumMemberValueHints = true,
+            includeInlayFunctionLikeReturnTypeHints = true,
+            includeInlayFunctionParameterTypeHints = true,
+            includeInlayParameterNameHints = "all",
+            includeInlayParameterNameHintsWhenArgumentMatchesName = true,
+            includeInlayPropertyDeclarationTypeHints = true,
+            includeInlayVariableTypeHints = true,
+          }
+          return opts
+        end,
+      },
+    },
+  },
 }

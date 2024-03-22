@@ -1,9 +1,51 @@
 return {
-  "nvim-treesitter/nvim-treesitter",
-  opts = function(_, opts)
-    -- add more things to the ensure_installed table protecting against community packs modifying it
-    opts.ensure_installed = require("astronvim.utils").list_insert_unique(opts.ensure_installed, {
-      -- "lua"
-    })
-  end,
+  {
+    "nvim-treesitter/nvim-treesitter",
+    keys = {
+      { "<leader>pt", name = "Tree-sitter" },
+      { "<leader>pts", vim.cmd.TSInstallInfo, desc = "Language module status" },
+      { "<leader>ptS", vim.cmd.TSModuleInfo, desc = "Language module features" },
+      { "<leader>ptS", vim.cmd.TSUpdate, desc = "Update all modules" },
+      { "gr", mode = "x", desc = "Incremental selection over syntax tree" },
+    },
+    opts = function(_, opts)
+      opts.ensure_installed = require("astronvim.utils").list_insert_unique(opts.ensure_installed, {
+        "bash",
+        "comment",
+        "css",
+        "diff",
+        "ebnf",
+        "embedded_template",
+        "git_config",
+        "git_rebase",
+        "gitattributes",
+        "gitcommit",
+        "gitignore",
+        "hjson",
+        "html",
+        "htmldjango",
+        "http",
+        "ini",
+        "javascript",
+        "jq",
+        "json",
+        "json5",
+        "jsonc",
+        "jsonnet",
+        "latex",
+        "lua",
+        "luadoc",
+        "luap",
+        "markdown",
+        "markdown_inline",
+        "mermaid",
+        "pem",
+        "regex",
+        "sql",
+        "vim",
+        "vimdoc",
+      })
+      return opts
+    end,
+  },
 }

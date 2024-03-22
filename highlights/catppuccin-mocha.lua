@@ -1,0 +1,3 @@
+return {
+  CursorColumn = { link = "CursorLine" },
+}
