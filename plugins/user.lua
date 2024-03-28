@@ -12,6 +12,10 @@ return {
     end,
   },
   {
+    "xvzc/chezmoi.nvim",
+    dependencies = { "nvim-lua/plenary.nvim" },
+  },
+  {
     "zbirenbaum/copilot.lua",
     cmd = "Copilot",
     event = "User AstroFile",
